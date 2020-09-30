@@ -18,6 +18,11 @@ static string HRscaled = "HR_SCALED.png";
 
 int main(int argc, char** argv)
 {
+	if (argc < 2) {
+		cerr << "Usage: " << argv[0] << " [LR image name] [HR image name] [Model name] [Global Scale [1]..[6]] \n" << endl;
+		return 1;
+	}
+
 	string LRimg = string(argv[1]);
 	string HRimg = string(argv[2]);
 
@@ -33,8 +38,6 @@ int main(int argc, char** argv)
 		cout << "Caught exception: " << error_.what() << endl;
 	}
 }
-
-
 
 void readLRHR(string& LRimg, string& HRimg, string& modelName, string& GlobalScale) {
 
@@ -128,7 +131,6 @@ void makeBG(size_t& widthHR, size_t& heightHR, string& modelName) {
 	pixelShadow.filterType(SplineFilter);
 	pixelShadow.resize("400%");
 
-
 	// Make text Layer with blurred shadow
 	Magick::Image shadowBlurred(Magick::Geometry(widthDoubleSize / 2, 64 / 2), Magick::Color(0, 0, 0, 0));
 	shadowBlurred.alpha(true);
@@ -180,9 +182,7 @@ void makeBG(size_t& widthHR, size_t& heightHR, string& modelName) {
 	gradientRad.composite(checkerBG, 0, 0, OverlayCompositeOp);
 	gradientRad.crop(Magick::Geometry(widthDoubleSize, 64, 0, int16_t(heightPlus64) - 64));
 	gradientRad.composite(shadowBlurred, 0, 0, AtopCompositeOp);
-
 	gradientRad.composite(pixelShadow, 0, 0, MultiplyCompositeOp);
-
 
 	gradientRad.write("_BG.png");
 
