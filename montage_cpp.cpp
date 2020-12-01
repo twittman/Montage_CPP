@@ -1,4 +1,5 @@
 #include <Magick++.h>
+#include <cxxopts.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -7,10 +8,10 @@
 using namespace std;
 using namespace Magick;
 
-void readLRHR(string& LRimg, string& HRimg, string& modelName, string& GlobalScale);
-void makeBG(size_t& widthHR, size_t& heightHR, string& modelName);
+void readLRHR(string& left, string& right, string& model, int& scale);
+void makeBG(size_t& widthHR, size_t& heightHR, string& model);
 void processLR(Image& inputLR, Image& inputHR, size_t& widthLR, size_t& widthHR);
-void montageLRHR(string& LRimg, string& HRimg, size_t& widthHR, size_t& heightHR);
+void montageLRHR(size_t& widthHR, size_t& heightHR);
 void makeCheckerPixels();
 
 static string LRscaled = "LR_SCALED.png";
@@ -18,35 +19,78 @@ static string HRscaled = "HR_SCALED.png";
 
 int main(int argc, char** argv)
 {
-	if (argc < 2) {
-		cerr << "Usage: " << argv[0] << " [LR image name] [HR image name] [Model name] [Global Scale [1]..[6]] \n" << endl;
-		return 1;
-	}
-
-	string LRimg = string(argv[1]);
-	string HRimg = string(argv[2]);
-
-	string GlobalScale = string(argv[4]);
-
-	string modelName = string(argv[3]);
-	try {
-		makeCheckerPixels();
-		readLRHR(LRimg, HRimg, modelName, GlobalScale);
-	}
-	catch (Exception& error_)
+	try
 	{
-		cout << "Caught exception: " << error_.what() << endl;
+		cxxopts::Options options(argv[0], "This is how you use this app");
+		options.add_options()
+			("l,left", "Left input image", cxxopts::value<std::string>())
+			("r,right", "Right input image", cxxopts::value<std::string>())
+			("m,model", "Model name", cxxopts::value<std::string>())
+			("s,scale", "Global scale", cxxopts::value<int>()->default_value("1"))
+			("h,help", "print help")
+			;
+
+		auto result = options.parse(argc, argv);
+
+		if (result.count("help"))
+		{
+			cout << options.help() << endl;
+			exit(0);
+		}
+
+		string left;
+		string right;
+		string model;
+		//int scale;
+
+
+		if (result.count("left"))
+			left = result["left"].as<std::string>();
+		if (result.count("right"))
+			right = result["right"].as<std::string>();
+		if (result.count("model"))
+			model = result["model"].as<std::string>();
+
+
+		int scale = result["scale"].as<int>();
+
+
+
+
+		/*if (argc < 2) {
+			cerr << "Usage: " << argv[0] << " [LR image name] [HR image name] [Model name] [Global Scale [1]..[6]] \n" << endl;
+			return 1;
+		}*/
+
+		/*string LRimg = string(argv[1]);
+		string HRimg = string(argv[2]);
+
+		string modelName = string(argv[3]);
+		string GlobalScale = string(argv[4]);*/
+
+		try {
+			makeCheckerPixels();
+			readLRHR(left, right, model, scale);
+		}
+		catch (Exception& error_)
+		{
+			cout << "Caught exception: " << error_.what() << endl;
+		}
+	}
+	catch (const cxxopts::OptionException& e)
+	{
+		cout << "error parsing options: " << e.what() << endl;
 	}
 }
 
-void readLRHR(string& LRimg, string& HRimg, string& modelName, string& GlobalScale) {
+void readLRHR(string& left, string& right, string& model, int& scale) {
 
 	InitializeMagick;
 	Image inputLR, inputHR, gradientRad;
-	inputLR.read(LRimg);
-	inputHR.read(HRimg);
+	inputLR.read(left);
+	inputHR.read(right);
 
-	int mainScaleInt = 1 * stoi(GlobalScale);
+	int mainScaleInt = scale;
 	string mainScaleString = to_string(mainScaleInt) + "00%";
 
 	inputLR.filterType(PointFilter);
@@ -62,8 +106,8 @@ void readLRHR(string& LRimg, string& HRimg, string& modelName, string& GlobalSca
 	size_t heightHR = inputHR.rows();
 
 	processLR(inputLR, inputHR, widthLR, widthHR);
-	makeBG(widthHR, heightHR, modelName);
-	montageLRHR(LRimg, HRimg, widthHR, heightHR);
+	makeBG(widthHR, heightHR, model);
+	montageLRHR(widthHR, heightHR);
 }
 
 void makeCheckerPixels() {
@@ -114,7 +158,7 @@ void processLR(Image& inputLR, Image& inputHR, size_t& widthLR, size_t& widthHR)
 
 }
 
-void makeBG(size_t& widthHR, size_t& heightHR, string& modelName) {
+void makeBG(size_t& widthHR, size_t& heightHR, string& model) {
 
 
 	int16_t widthDoubleSize = int(widthHR) * 2;
@@ -140,7 +184,7 @@ void makeBG(size_t& widthHR, size_t& heightHR, string& modelName) {
 	shadowBlurred.textEncoding("UTF-8");
 	shadowBlurred.font("c:\\windows\\fonts\\rubik-bold.ttf");
 	shadowBlurred.fontPointsize(72 / 4);
-	shadowBlurred.annotate(modelName, Geometry(widthDoubleSize / 2, 54 / 2), SouthGravity);
+	shadowBlurred.annotate(model, Geometry(widthDoubleSize / 2, 54 / 2), SouthGravity);
 	shadowBlurred.blur(0, 1);
 	shadowBlurred.filterType(GaussianFilter);
 	shadowBlurred.resize("400%");
@@ -153,7 +197,7 @@ void makeBG(size_t& widthHR, size_t& heightHR, string& modelName) {
 	shadowBlurred.textEncoding("UTF-8");
 	shadowBlurred.font("c:\\windows\\fonts\\rubik-bold.ttf");
 	shadowBlurred.fontPointsize(72);
-	shadowBlurred.annotate(modelName, Geometry(widthDoubleSize * 2, 52 * 2), SouthGravity);
+	shadowBlurred.annotate(model, Geometry(widthDoubleSize * 2, 52 * 2), SouthGravity);
 	shadowBlurred.resize("50%");
 
 	// Tile BG checkerboard image scaled 400%
@@ -189,7 +233,7 @@ void makeBG(size_t& widthHR, size_t& heightHR, string& modelName) {
 	std::remove("_checkerboard6x6_gen.png");
 }
 
-void montageLRHR(string& LRimg, string& HRimg, size_t& widthHR, size_t& heightHR) {
+void montageLRHR(size_t& widthHR, size_t& heightHR) {
 
 	int widthTILE = widthHR;
 	int heightTILE = heightHR;
