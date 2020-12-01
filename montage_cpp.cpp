@@ -55,19 +55,6 @@ int main(int argc, char** argv)
 		int scale = result["scale"].as<int>();
 
 
-
-
-		/*if (argc < 2) {
-			cerr << "Usage: " << argv[0] << " [LR image name] [HR image name] [Model name] [Global Scale [1]..[6]] \n" << endl;
-			return 1;
-		}*/
-
-		/*string LRimg = string(argv[1]);
-		string HRimg = string(argv[2]);
-
-		string modelName = string(argv[3]);
-		string GlobalScale = string(argv[4]);*/
-
 		try {
 			makeCheckerPixels();
 			readLRHR(left, right, model, scale);
