@@ -8,20 +8,17 @@
 #include <filesystem>
 #include "util.hpp"
 
-using namespace std;
-using namespace Magick;
-
-void eraseStr( std::string& s, std::string& p );
-void autoMode( std::string& inputFile, std::string& inputFileNoEXT, int& scale );
+void eraseStr(std::string& s,std::string& p );
+void autoMode(std::string& inputFile, std::string& inputFileNoEXT, int& scale );
 void getFiles(int& scale);
-void readLRHR( string& left, string& right, string& model, int& scale );
-void makeBG( size_t& widthHR, size_t& heightHR, string& model, Magick::Blob& BGblob );
-void processLR( Image& inputLR, Image& inputHR, size_t& widthLR, size_t& widthHR, Magick::Blob& leftBlob, Magick::Blob& rightBlob );
-void montageLRHR( size_t& widthHR, size_t& heightHR, string& montageName, Magick::Blob& leftBlob, Magick::Blob& rightBlob, Magick::Blob& BGblob );
+void readLRHR(std::string& left,std::string& right,std::string& model, int& scale );
+void makeBG( size_t& widthHR, size_t& heightHR,std::string& model, Magick::Blob& BGblob );
+void processLR( Magick::Image& inputLR, Magick::Image& inputHR, size_t& widthLR, size_t& widthHR, Magick::Blob& leftBlob, Magick::Blob& rightBlob );
+void montageLRHR( size_t& widthHR, size_t& heightHR,std::string& montageName, Magick::Blob& leftBlob, Magick::Blob& rightBlob, Magick::Blob& BGblob );
 void makeCheckerPixels();
 
-static string LRscaled = "LR_SCALED.png";
-static string HRscaled = "HR_SCALED.png";
+static std::string LRscaled = "LR_SCALED.png";
+static std::string HRscaled = "HR_SCALED.png";
 
 int main( int argc, char** argv )
 {
@@ -41,13 +38,13 @@ int main( int argc, char** argv )
 
 		if ( result.count( "help" ) )
 		{
-			cout << options.help() << endl;
+			std::cout << options.help() << std::endl;
 			exit( 0 );
 		}
-		string montageFolder = "_montages";
-		string left;
-		string right;
-		string model;
+		std::string montageFolder = "_montages";
+		std::string left;
+		std::string right;
+		std::string model;
 		int scale;
 
 		if ( std::filesystem::exists( montageFolder ) ) {
@@ -65,9 +62,9 @@ int main( int argc, char** argv )
 			try {
 				getFiles(scale);
 			}
-			catch ( Exception& error_ )
+			catch ( Magick::Exception& error_ )
 			{
-				cout << "Caught exception: " << error_.what() << endl;
+				std::cout << "Caught exception: " << error_.what() << std::endl;
 			}
 		}
 		else if ( automatic_run == false ) {
@@ -85,28 +82,28 @@ int main( int argc, char** argv )
 				makeCheckerPixels();
 				readLRHR( left, right, model, scale );
 			}
-			catch ( Exception& error_ )
+			catch ( Magick::Exception& error_ )
 			{
-				cout << "Caught exception: " << error_.what() << endl;
+				std::cout << "Caught exception: " << error_.what() << std::endl;
 			}
 
 			auto t2 = std::chrono::high_resolution_clock::now();
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
-			cout << "Time taken for this image: " << duration / 1000.0 << " seconds" << "\n" << endl;
+			std::cout << "Time taken for this image: " << duration / 1000.0 << " seconds" << "\n" << std::endl;
 		}
 
 	}
 	catch ( const cxxopts::OptionException& e )
 	{
-		cout << "error parsing options: " << e.what() << endl;
+		std::cout << "error parsing options: " << e.what() << std::endl;
 	}
 }
 
-void readLRHR( string& left, string& right, string& model, int& scale )
+void readLRHR(std::string& left,std::string& right,std::string& model, int& scale )
 {
 
-	InitializeMagick;
-	Image inputLR, inputHR, gradientRad;
+	Magick::InitializeMagick;
+	Magick::Image inputLR, inputHR, gradientRad;
 	Magick::Blob leftBlob, rightBlob, BGblob;
 	inputLR.read( left );
 	inputHR.read( right );
@@ -115,11 +112,11 @@ void readLRHR( string& left, string& right, string& model, int& scale )
 	inputHR.magick( "png" );
 
 	int mainScaleInt = scale;
-	string mainScaleString = to_string( mainScaleInt ) + "00%";
+	std::string mainScaleString = std::to_string( mainScaleInt ) + "00%";
 
-	inputLR.filterType( PointFilter );
+	inputLR.filterType( Magick::FilterType::PointFilter );
 	inputLR.resize( mainScaleString );
-	inputHR.filterType( PointFilter );
+	inputHR.filterType( Magick::FilterType::PointFilter );
 	inputHR.resize( mainScaleString );
 
 	std::string montageName = left;
@@ -137,10 +134,10 @@ void readLRHR( string& left, string& right, string& model, int& scale )
 
 void makeCheckerPixels()
 {
-	InitializeMagick;
-	Image darkGrayPixel( "6x6", "#666666" ), lightGrayPixel( "6x6", "#9a9a9a" );
+	Magick::InitializeMagick;
+	Magick::Image darkGrayPixel( "6x6", "#666666" ), lightGrayPixel( "6x6", "#9a9a9a" );
 
-	list<Magick::Image> imageList;
+	std::list<Magick::Image> imageList;
 
 	imageList.push_back( darkGrayPixel );
 	imageList.push_back( lightGrayPixel );
@@ -152,86 +149,86 @@ void makeCheckerPixels()
 	imageList.push_back( lightGrayPixel );
 	imageList.push_back( darkGrayPixel );
 
-	Montage montageSettings;
+	Magick::Montage montageSettings;
 	montageSettings.geometry( "6x6-0-0" );
 	montageSettings.tile( "4x2" );
 
-	list<Magick::Image> montageList;
+	std::list<Magick::Image> montageList;
 	Magick::montageImages( &montageList, imageList.begin(), imageList.end(), montageSettings );
 	Magick::writeImages( montageList.begin(), montageList.end(), "_montages/_checkerboard6x6_gen.png" );
 }
 
-void processLR( Image& inputLR, Image& inputHR, size_t& widthLR, size_t& widthHR, Magick::Blob& leftBlob, Magick::Blob& rightBlob )
+void processLR( Magick::Image& inputLR, Magick::Image& inputHR, size_t& widthLR, size_t& widthHR, Magick::Blob& leftBlob, Magick::Blob& rightBlob )
 {
 	if ( widthLR == widthHR / 16 ) {
-		inputLR.filterType( PointFilter );
+		inputLR.filterType( Magick::FilterType::PointFilter );
 		inputLR.resize( "1600%" );
 		inputLR.write( &leftBlob );
 		inputHR.write( &rightBlob );
-		//std::cout << "LR is being scaled 1600% " << endl;
+		//std::std::cout << "LR is being scaled 1600% " << std::endl;
 	}
 	else if ( widthLR == widthHR / 8 ) {
-		inputLR.filterType( PointFilter );
+		inputLR.filterType( Magick::FilterType::PointFilter );
 		inputLR.resize( "800%" );
 		inputLR.write( &leftBlob );
 		inputHR.write( &rightBlob );
-		//std::cout << "LR is being scaled 800% " << endl;
+		//std::std::cout << "LR is being scaled 800% " << std::endl;
 	}
 	else if ( widthLR == widthHR / 4 ) {
-		inputLR.filterType( PointFilter );
+		inputLR.filterType( Magick::FilterType::PointFilter );
 		inputLR.resize( "400%" );
 		inputLR.write( &leftBlob );
 		inputHR.write( &rightBlob );
-		//std::cout << "LR is being scaled 400% " << endl;
+		//std::std::cout << "LR is being scaled 400% " << std::endl;
 	}
 	else if ( widthLR == widthHR / 2 ) {
-		inputLR.filterType( PointFilter );
+		inputLR.filterType( Magick::FilterType::PointFilter );
 		inputLR.resize( "200%" );
 		inputLR.write( &leftBlob );
 		inputHR.write( &rightBlob );
-		//std::cout << "LR is being scaled 200% " << endl;
+		//std::std::cout << "LR is being scaled 200% " << std::endl;
 	}
 	else if ( widthLR == widthHR ) {
 		inputLR.write( &leftBlob );
 		inputHR.write( &rightBlob );
-		//std::cout << "LR is already the same dimensions as HR " << endl;
+		//std::std::cout << "LR is already the same dimensions as HR " << std::endl;
 	}
 
 }
 
-void makeBG( size_t& widthHR, size_t& heightHR, string& model, Magick::Blob& BGblob )
+void makeBG( size_t& widthHR, size_t& heightHR,std::string& model, Magick::Blob& BGblob )
 {
 
 
 	int16_t widthDoubleSize = int( widthHR ) * 2;
 	int16_t heightPlus64 = int( widthHR ) + 64;
-	string bgSize = to_string( widthDoubleSize ) + "x" + to_string( heightPlus64 );
+	std::string bgSize = std::to_string( widthDoubleSize ) + "x" + std::to_string( heightPlus64 );
 
 	// Make thin black line for drop shadow
 	Magick::Image pixelShadow( Magick::Geometry( widthDoubleSize / 4, 3 ), Magick::Color( 0, 0, 0 ) );
 	pixelShadow.size( Magick::Geometry( widthDoubleSize / 4, 3 ) );
 	pixelShadow.alpha( true );
-	pixelShadow.virtualPixelMethod( TransparentVirtualPixelMethod );
+	pixelShadow.virtualPixelMethod( Magick::VirtualPixelMethod::TransparentVirtualPixelMethod );
 	pixelShadow.extent( Magick::Geometry( widthDoubleSize / 4, 10 ) );
 	pixelShadow.motionBlur( 0, 10, 90 );
-	pixelShadow.filterType( SplineFilter );
+	pixelShadow.filterType( Magick::FilterType::SplineFilter );
 	pixelShadow.resize( "400%" );
 
 	// Make text Layer with blurred shadow
 	Magick::Image shadowBlurred( Magick::Geometry( widthDoubleSize / 2, 64 / 2 ), Magick::Color( 0, 0, 0, 0 ) );
 	shadowBlurred.alpha( true );
 	shadowBlurred.size( Magick::Geometry( widthDoubleSize / 2, 64 / 2 ) );
-	shadowBlurred.virtualPixelMethod( TransparentVirtualPixelMethod );
+	shadowBlurred.virtualPixelMethod( Magick::VirtualPixelMethod::TransparentVirtualPixelMethod );
 	shadowBlurred.fillColor( "BLACK" );
 	shadowBlurred.textEncoding( "UTF-8" );
 	shadowBlurred.font( "c:\\windows\\fonts\\rubik-bold.ttf" );
 	shadowBlurred.fontPointsize( 72 / 4 );
-	shadowBlurred.annotate( model, Geometry( widthDoubleSize / 2, 54 / 2 ), SouthGravity );
+	shadowBlurred.annotate( model, Magick::Geometry( widthDoubleSize / 2, 54 / 2 ), Magick::GravityType::SouthGravity );
 	shadowBlurred.blur( 0, 1 );
-	shadowBlurred.filterType( GaussianFilter );
+	shadowBlurred.filterType( Magick::FilterType::GaussianFilter );
 	shadowBlurred.resize( "400%" );
 
-	shadowBlurred.virtualPixelMethod( TransparentVirtualPixelMethod );
+	shadowBlurred.virtualPixelMethod( Magick::VirtualPixelMethod::TransparentVirtualPixelMethod );
 	shadowBlurred.fillColor( "WHITE" );
 	shadowBlurred.strokeColor( "BLACK" );
 	shadowBlurred.strokeWidth( 2.3 );
@@ -239,7 +236,7 @@ void makeBG( size_t& widthHR, size_t& heightHR, string& model, Magick::Blob& BGb
 	shadowBlurred.textEncoding( "UTF-8" );
 	shadowBlurred.font( "c:\\windows\\fonts\\rubik-bold.ttf" );
 	shadowBlurred.fontPointsize( 72 );
-	shadowBlurred.annotate( model, Geometry( widthDoubleSize * 2, 52 * 2 ), SouthGravity );
+	shadowBlurred.annotate( model, Magick::Geometry( widthDoubleSize * 2, 52 * 2 ), Magick::GravityType::SouthGravity );
 	shadowBlurred.resize( "50%" );
 
 	// Tile BG checkerboard image scaled 400%
@@ -247,7 +244,7 @@ void makeBG( size_t& widthHR, size_t& heightHR, string& model, Magick::Blob& BGb
 	Magick::Image checkerBG;
 	checkerBG.size( "24x12" );
 	checkerBG.read( "tile:_montages/_checkerboard6x6_gen.png" );
-	checkerBG.filterType( PointFilter );
+	checkerBG.filterType( Magick::FilterType::PointFilter );
 	checkerBG.resize( "400%" );
 	checkerBG.extent( Magick::Geometry( 24 * 4, 12 * 4 ), color );
 	checkerBG.size( Magick::Geometry( widthDoubleSize, heightPlus64 ) );
@@ -255,46 +252,46 @@ void makeBG( size_t& widthHR, size_t& heightHR, string& model, Magick::Blob& BGb
 	const double tileArg[1] = { 0 };
 	checkerBG.distort( Magick::ScaleRotateTranslateDistortion, 1, tileArg, Magick::MagickTrue );
 	checkerBG.alpha( true );
-	checkerBG.evaluate( AlphaChannel, MultiplyEvaluateOperator, 0.4 );
+	checkerBG.evaluate( Magick::AlphaChannel, Magick::MultiplyEvaluateOperator, 0.4 );
 
 	// Generate Radial Gradient
 	Magick::Image gradientRad;
 	gradientRad.size( Magick::Geometry( widthDoubleSize / 8, heightPlus64 / 8 ) );
 	gradientRad.read( "radial-gradient:rgb(125,65,130)-rgb(255,209,65)" );
-	gradientRad.filterType( GaussianFilter );
+	gradientRad.filterType( Magick::FilterType::GaussianFilter );
 	gradientRad.resize( "800%" );
 
 	// Composite Chckerboard over Gradient
-	gradientRad.composite( checkerBG, 0, 0, OverlayCompositeOp );
+	gradientRad.composite( checkerBG, 0, 0, Magick::OverlayCompositeOp );
 	gradientRad.crop( Magick::Geometry( widthDoubleSize, 64, 0, int16_t( heightPlus64 ) - 64 ) );
-	gradientRad.composite( shadowBlurred, 0, 0, AtopCompositeOp );
-	gradientRad.composite( pixelShadow, 0, 0, MultiplyCompositeOp );
+	gradientRad.composite( shadowBlurred, 0, 0, Magick::AtopCompositeOp );
+	gradientRad.composite( pixelShadow, 0, 0, Magick::MultiplyCompositeOp );
 
 
 	gradientRad.magick( "png" );
 	gradientRad.write( &BGblob );
 }
 
-void montageLRHR( size_t& widthHR, size_t& heightHR, string& montageName, Magick::Blob& leftBlob, Magick::Blob& rightBlob, Magick::Blob& BGblob )
+void montageLRHR( size_t& widthHR, size_t& heightHR,std::string& montageName, Magick::Blob& leftBlob, Magick::Blob& rightBlob, Magick::Blob& BGblob )
 {
 	Magick::Blob montage_blob_temp;
 	int widthTILE = widthHR;
 	int heightTILE = heightHR;
 
-	string geomArg = to_string( widthTILE ) + "x" + to_string( heightTILE ) + "-0-0";
+	std::string geomArg = std::to_string( widthTILE ) + "x" + std::to_string( heightTILE ) + "-0-0";
 
-	list<Magick::Image> imageList;
+	std::list<Magick::Image> imageList;
 	Magick::Image montageLRHR;
 	montageLRHR.read( leftBlob );
 	imageList.push_back( montageLRHR );
 	montageLRHR.read( rightBlob );
 	imageList.push_back( montageLRHR );
 
-	Montage montageSettings;
+	Magick::Montage montageSettings;
 	montageSettings.geometry( geomArg );
 	montageSettings.tile( "2x1" );
 
-	list<Magick::Image> montageList;
+	std::list<Magick::Image> montageList;
 	Magick::montageImages( &montageList, imageList.begin(), imageList.end(), montageSettings );
 	Magick::writeImages( montageList.begin(), montageList.end(), "_montages/_montage_02.png" );
 
@@ -308,7 +305,7 @@ void montageLRHR( size_t& widthHR, size_t& heightHR, string& montageName, Magick
 	Magick::Image montageTemp_001, gradientRad1;
 	gradientRad1.read( BGblob );
 	montageTemp_001.read( "_montages/_montage_02.png" );
-	montageTemp_001.virtualPixelMethod( TransparentVirtualPixelMethod );
+	montageTemp_001.virtualPixelMethod( Magick::VirtualPixelMethod::TransparentVirtualPixelMethod );
 	montageTemp_001.extent( Magick::Geometry( widthTILE * 2, heightTILE + 64 ) );
 
 	montageTemp_001.composite( gradientRad1, SouthGravity, AtopCompositeOp );
@@ -346,9 +343,9 @@ void autoMode( std::string& inputFile, std::string& inputFileNoEXT, int& scale )
 		eraseStr( left_image, model_name );
 		left_image = left_image.substr( 0, left_image.size() - 1 ) + ".png";
 
-		//std::cout << "Model name: " << model_name << "\n";
-		//std::cout << "Left image: " << left_image << "\n";
-		//std::cout << "Right image: " << right_image << std::endl;
+		//std::std::cout << "Model name: " << model_name << "\n";
+		//std::std::cout << "Left image: " << left_image << "\n";
+		//std::std::cout << "Right image: " << right_image << std::std::endl;
 
 		readLRHR( left_image, right_image, model_name, scale );
 
