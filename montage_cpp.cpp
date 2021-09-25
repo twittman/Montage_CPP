@@ -123,9 +123,14 @@ void makeBG( size_t& widthHR, size_t& heightHR, std::string& model, Magick::Blob
 	gradientRad.composite( shadowBlurred, 0, 0, Magick::AtopCompositeOp );
 	gradientRad.composite( pixelShadow, 0, 0, Magick::MultiplyCompositeOp );
 
-
-	gradientRad.magick( "png" );
-	gradientRad.write( &BGblob );
+	try {
+		gradientRad.magick( "png" );
+		gradientRad.write( &BGblob );
+	} 
+	catch ( Magick::Exception& error_ )
+			{
+				std::cout << "Caught exception: " << error_.what() << std::endl;
+			}
 }
 
 void montageLRHR( size_t& widthHR, size_t& heightHR, std::string& montageName, Magick::Blob& leftBlob, Magick::Blob& rightBlob, Magick::Blob& BGblob )
@@ -154,9 +159,14 @@ void montageLRHR( size_t& widthHR, size_t& heightHR, std::string& montageName, M
 
 	//std::remove( "LR_SCALED.png" );
 	//std::remove( "HR_SCALED.png" );
+	std::string montageNoPath;
 
-	auto lastPeriod = montageName.find_last_of( "." );
-	std::string outputMontageName = "_montages/" + montageName.substr( 0, lastPeriod ) + "_montage.png";
+	auto last_slash = montageName.find_last_of( "/\\" );
+	montageNoPath = montageName.substr( last_slash + 1 );
+	auto lastPeriod = montageNoPath.find_last_of( "." );
+
+	std::string outputMontageName = "_montages/" + montageNoPath.substr( 0, lastPeriod ) + "_montage.png";
+	//std::cout << "Montage name: " << outputMontageName << std::endl;
 
 	Magick::Image montageTemp_001, gradientRad1;
 	gradientRad1.read( BGblob );
@@ -164,10 +174,15 @@ void montageLRHR( size_t& widthHR, size_t& heightHR, std::string& montageName, M
 	montageTemp_001.virtualPixelMethod( Magick::VirtualPixelMethod::TransparentVirtualPixelMethod );
 	montageTemp_001.extent( Magick::Geometry( static_cast<float>(widthTILE) * 2, static_cast<float>(heightTILE) + 64 ) );
 
-	montageTemp_001.composite( gradientRad1, Magick::SouthGravity, Magick::AtopCompositeOp );
+	try {
+		montageTemp_001.composite( gradientRad1, Magick::SouthGravity, Magick::AtopCompositeOp );
 
-	montageTemp_001.write( outputMontageName );
-
+		montageTemp_001.write( outputMontageName );
+	}
+	catch ( Magick::Exception& error_ )
+	{
+		std::cout << "Caught exception: " << error_.what() << std::endl;
+	}
 	//std::remove( "_BG.png" );
 	std::remove( "_montages/_montage_02.png" );
 }
@@ -259,12 +274,7 @@ void autoMode( std::string& inputFile, std::string& inputFileNoEXT, int& scale )
 		eraseStr( left_image, model_name );
 		left_image = left_image.substr( 0, left_image.size() - 1 ) + ".png";
 
-		//std::std::cout << "Model name: " << model_name << "\n";
-		//std::std::cout << "Left image: " << left_image << "\n";
-		//std::std::cout << "Right image: " << right_image << std::std::endl;
-
 		readLRHR( left_image, right_image, model_name, scale );
-
 	};
 }
 
@@ -290,7 +300,7 @@ void getFiles( int& scale )
 			std::cout << "\rMontages processed: " << ( fileCount++ / 2 ) << "\r" << std::flush;
 		}
 		else {
-			std::cout << "\rNo image files detected" << "\t" << std::flush;
+			std::cout << "\rNo other image files detected" << "\t" << std::flush;
 		}
 	}
 	std::remove( "_montages/_checkerboard6x6_gen.png" );
@@ -332,7 +342,6 @@ int main( int argc, char** argv )
 			std::filesystem::create_directory( montageFolder );
 		}
 
-
 		bool automatic_run = result["auto"].as<bool>();
 		scale = result["scale"].as<int>();
 
@@ -356,18 +365,14 @@ int main( int argc, char** argv )
 
 			auto t1 = std::chrono::high_resolution_clock::now();
 
-			try {
-				makeCheckerPixels();
-				readLRHR( left, right, model, scale );
-			}
-			catch ( Magick::Exception& error_ )
-			{
-				std::cout << "Caught exception: " << error_.what() << std::endl;
-			}
+
+			makeCheckerPixels();
+			readLRHR( left, right, model, scale );
 
 			auto t2 = std::chrono::high_resolution_clock::now();
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
 			std::cout << "Time taken for this image: " << duration / 1000.0 << " seconds" << "\n" << std::endl;
+			std::remove( "_montages/_checkerboard6x6_gen.png" );
 		}
 
 	}
