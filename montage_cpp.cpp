@@ -13,39 +13,60 @@ static std::string HRscaled = "HR_SCALED.png";
 
 void processLR( Magick::Image& inputLR, Magick::Image& inputHR, size_t& widthLR, size_t& widthHR, Magick::Blob& leftBlob, Magick::Blob& rightBlob )
 {
-	if ( widthLR == widthHR / 16 ) {
-		inputLR.filterType( Magick::FilterType::PointFilter );
-		inputLR.resize( "1600%" );
-		inputLR.write( &leftBlob );
-		inputHR.write( &rightBlob );
-		//std::std::cout << "LR is being scaled 1600% " << std::endl;
-	}
-	else if ( widthLR == widthHR / 8 ) {
-		inputLR.filterType( Magick::FilterType::PointFilter );
-		inputLR.resize( "800%" );
-		inputLR.write( &leftBlob );
-		inputHR.write( &rightBlob );
-		//std::std::cout << "LR is being scaled 800% " << std::endl;
-	}
-	else if ( widthLR == widthHR / 4 ) {
-		inputLR.filterType( Magick::FilterType::PointFilter );
-		inputLR.resize( "400%" );
-		inputLR.write( &leftBlob );
-		inputHR.write( &rightBlob );
-		//std::std::cout << "LR is being scaled 400% " << std::endl;
-	}
-	else if ( widthLR == widthHR / 2 ) {
-		inputLR.filterType( Magick::FilterType::PointFilter );
-		inputLR.resize( "200%" );
-		inputLR.write( &leftBlob );
-		inputHR.write( &rightBlob );
-		//std::std::cout << "LR is being scaled 200% " << std::endl;
-	}
-	else if ( widthLR == widthHR ) {
-		inputLR.write( &leftBlob );
-		inputHR.write( &rightBlob );
-		//std::std::cout << "LR is already the same dimensions as HR " << std::endl;
-	}
+
+	int scaleValue = widthHR / widthLR;
+
+	std::string scale;
+	scale += std::to_string(scaleValue);
+	scale += "00";
+	scale += "%";
+	//std::cout << "Scale Value: " << scaleValue << "\n";
+	//std::cout << "Scale: " << scale << "\n";
+
+	inputLR.filterType( Magick::FilterType::PointFilter );
+	inputLR.resize( scale );
+	inputLR.write( &leftBlob );
+	inputHR.write( &rightBlob );
+
+
+	//if ( widthLR == widthHR / 16 ) {
+	//	inputLR.filterType( Magick::FilterType::PointFilter );
+	//	inputLR.resize( "1600%" );
+	//	inputLR.write( &leftBlob );
+	//	inputHR.write( &rightBlob );
+	//	//std::std::cout << "LR is being scaled 1600% " << std::endl;
+	//}
+	//else if ( widthLR == widthHR / 8 ) {
+	//	inputLR.filterType( Magick::FilterType::PointFilter );
+	//	inputLR.resize( "800%" );
+	//	inputLR.write( &leftBlob );
+	//	inputHR.write( &rightBlob );
+	//	//std::std::cout << "LR is being scaled 800% " << std::endl;
+	//else if ( widthLR == widthHR / 6 ) {
+	//	inputLR.filterType( Magick::FilterType::PointFilter );
+	//	inputLR.resize( "600%" );
+	//	inputLR.write( &leftBlob );
+	//	inputHR.write( &rightBlob );
+	//	//std::std::cout << "LR is being scaled 600% " << std::endl;
+	//else if ( widthLR == widthHR / 4 ) {
+	//	inputLR.filterType( Magick::FilterType::PointFilter );
+	//	inputLR.resize( "400%" );
+	//	inputLR.write( &leftBlob );
+	//	inputHR.write( &rightBlob );
+	//	//std::std::cout << "LR is being scaled 400% " << std::endl;
+	//}
+	//else if ( widthLR == widthHR / 2 ) {
+	//	inputLR.filterType( Magick::FilterType::PointFilter );
+	//	inputLR.resize( "200%" );
+	//	inputLR.write( &leftBlob );
+	//	inputHR.write( &rightBlob );
+	//	//std::std::cout << "LR is being scaled 200% " << std::endl;
+	//}
+	//else if ( widthLR == widthHR ) {
+	//	inputLR.write( &leftBlob );
+	//	inputHR.write( &rightBlob );
+	//	//std::std::cout << "LR is already the same dimensions as HR " << std::endl;
+	//}
 
 }
 
