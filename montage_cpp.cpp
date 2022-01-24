@@ -28,46 +28,6 @@ void processLR( Magick::Image& inputLR, Magick::Image& inputHR, size_t& widthLR,
 	inputLR.write( &leftBlob );
 	inputHR.write( &rightBlob );
 
-
-	//if ( widthLR == widthHR / 16 ) {
-	//	inputLR.filterType( Magick::FilterType::PointFilter );
-	//	inputLR.resize( "1600%" );
-	//	inputLR.write( &leftBlob );
-	//	inputHR.write( &rightBlob );
-	//	//std::std::cout << "LR is being scaled 1600% " << std::endl;
-	//}
-	//else if ( widthLR == widthHR / 8 ) {
-	//	inputLR.filterType( Magick::FilterType::PointFilter );
-	//	inputLR.resize( "800%" );
-	//	inputLR.write( &leftBlob );
-	//	inputHR.write( &rightBlob );
-	//	//std::std::cout << "LR is being scaled 800% " << std::endl;
-	//else if ( widthLR == widthHR / 6 ) {
-	//	inputLR.filterType( Magick::FilterType::PointFilter );
-	//	inputLR.resize( "600%" );
-	//	inputLR.write( &leftBlob );
-	//	inputHR.write( &rightBlob );
-	//	//std::std::cout << "LR is being scaled 600% " << std::endl;
-	//else if ( widthLR == widthHR / 4 ) {
-	//	inputLR.filterType( Magick::FilterType::PointFilter );
-	//	inputLR.resize( "400%" );
-	//	inputLR.write( &leftBlob );
-	//	inputHR.write( &rightBlob );
-	//	//std::std::cout << "LR is being scaled 400% " << std::endl;
-	//}
-	//else if ( widthLR == widthHR / 2 ) {
-	//	inputLR.filterType( Magick::FilterType::PointFilter );
-	//	inputLR.resize( "200%" );
-	//	inputLR.write( &leftBlob );
-	//	inputHR.write( &rightBlob );
-	//	//std::std::cout << "LR is being scaled 200% " << std::endl;
-	//}
-	//else if ( widthLR == widthHR ) {
-	//	inputLR.write( &leftBlob );
-	//	inputHR.write( &rightBlob );
-	//	//std::std::cout << "LR is already the same dimensions as HR " << std::endl;
-	//}
-
 }
 
 void makeBG( size_t& widthHR, size_t& heightHR, std::string& model, Magick::Blob& BGblob )
@@ -79,7 +39,13 @@ void makeBG( size_t& widthHR, size_t& heightHR, std::string& model, Magick::Blob
 	std::string bgSize = std::to_string( widthDoubleSize ) + "x" + std::to_string( heightPlus64 );
 
 	double shadowGeoWidth = static_cast<double>(widthDoubleSize) / static_cast<double>(3.96);
-
+	int fsb; // font size bruh
+	if (widthHR <= 258) {
+		fsb = 50;
+	}
+	else {
+		fsb = 72;
+	}
 
 	// Make thin black line for drop shadow
 	Magick::Image pixelShadow( Magick::Geometry( widthDoubleSize / 4, 3 ), Magick::Color( 0, 0, 0 ) );
@@ -99,7 +65,7 @@ void makeBG( size_t& widthHR, size_t& heightHR, std::string& model, Magick::Blob
 	shadowBlurred.fillColor( "GRAY13" );
 	shadowBlurred.textEncoding( "UTF-8" );
 	shadowBlurred.font( "c:\\windows\\fonts\\rubik-bold.ttf" );
-	shadowBlurred.fontPointsize( 72 / 8 );
+	shadowBlurred.fontPointsize( fsb / 8 );
 	shadowBlurred.annotate( model, Magick::Geometry( shadowGeoWidth, 62 / 4 ), Magick::GravityType::SouthGravity );
 	shadowBlurred.blur( 0, 1 );
 	shadowBlurred.filterType( Magick::FilterType::GaussianFilter );
@@ -112,7 +78,7 @@ void makeBG( size_t& widthHR, size_t& heightHR, std::string& model, Magick::Blob
 	shadowBlurred.strokeAntiAlias( true );
 	shadowBlurred.textEncoding( "UTF-8" );
 	shadowBlurred.font( "c:\\windows\\fonts\\rubik-bold.ttf" );
-	shadowBlurred.fontPointsize( 72 );
+	shadowBlurred.fontPointsize( fsb );
 	shadowBlurred.annotate( model, Magick::Geometry( static_cast<int>(widthDoubleSize) * 2, 52 * 2 ), Magick::GravityType::SouthGravity );
 	shadowBlurred.resize( "50%" );
 
@@ -133,14 +99,14 @@ void makeBG( size_t& widthHR, size_t& heightHR, std::string& model, Magick::Blob
 
 	// Generate Radial Gradient
 	Magick::Image gradientRad;
-	gradientRad.size( Magick::Geometry( widthDoubleSize / 8, heightPlus64 / 8 ) );
+	gradientRad.size( Magick::Geometry( (widthDoubleSize / 8) + 8, (heightPlus64 / 4) + 8 ) );
 	gradientRad.read( "radial-gradient:rgb(125,65,130)-rgb(255,209,65)" );
 	gradientRad.filterType( Magick::FilterType::GaussianFilter );
 	gradientRad.resize( "800%" );
 
 	// Composite Chckerboard over Gradient
 	gradientRad.composite( checkerBG, 0, 0, Magick::OverlayCompositeOp );
-	gradientRad.crop( Magick::Geometry( widthDoubleSize, 64, 0, static_cast<int>(heightPlus64) - 64 ) );
+	gradientRad.crop( Magick::Geometry( widthDoubleSize, 64, 32, static_cast<int>(heightPlus64) - 64 ) );
 	gradientRad.composite( shadowBlurred, 0, 0, Magick::AtopCompositeOp );
 	gradientRad.composite( pixelShadow, 0, 0, Magick::MultiplyCompositeOp );
 
@@ -284,7 +250,7 @@ void autoMode( std::string& inputFile, std::string& inputFileNoEXT, int& scale )
 	std::string model_name_is;
 	std::string model_name;
 
-	auto find_a_match = std::regex{ "[1-8]x[_a-zA-Z-]+[0-9]+_G" };
+	auto find_a_match = std::regex{ "[1-8]x[_a-zA-Z--_]+[0-9]+_G" };
 	if ( auto showName = std::regex_search( inputFileNoEXT, m, find_a_match ) ) {
 		for ( std::string v : m )
 			model_name_is = v;
@@ -308,7 +274,7 @@ void getFiles( int& scale )
 	std::string input = "./";
 	int fileCount = 0;
 
-	for ( const auto& entry : std::filesystem::directory_iterator( input ) ) {
+	for ( const auto& entry : std::filesystem::directory_iterator( std::filesystem::current_path() ) ) {
 		std::string ExtensionType = entry.path().extension().string();
 		if ( twitls::imgExt::is_image_extension( ExtensionType ) ) {
 			inputFile = entry.path().string();
